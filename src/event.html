@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create Registration Appointment</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"> -->
+  <style>
+    .loading {
+      background-color: bisque;
+      width: 100vw;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 100000;
+
+    }
+
+    pt-40 {
+      padding-top: 10rem;
+    }
+
+    .yellow {
+      background: yellow;
+    }
+
+    .orange {
+      background: orangered;
+    }
+
+    .lavender {
+      background: lavender;
+    }
+  </style>
+</head>
+
+<!-- onload="getOption()   -->
+
+<body>
+  <div class="container">
+
+    <? names?>
+    <h6 id="names" data-names=<?=`${[names]}`?> >Please complete form below to create registration appointment</h6>
+
+
+    <br>
+
+    <div id="form" class="form-control">
+
+
+
+
+    </div>
+
+
+
+  </div>
+
+
+
+
+
+
+
+
+
+
+  <div id="loading" class="loading pt-40">
+    <div class="d-flex justify-content-center">
+      <div>
+
+        <div class="spinner-border" role="status" style="width: 4rem; height: 4rem;">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <div>Loading... </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+    crossorigin="anonymous"></script>
+
+  <script>
+
+
+    function getOption() {
+
+      const names = document.getElementById('names').dataset.names;
+      console.log(names)
+      const nameArr = names.split(';').map(name => name.replace(/^,/, '')).filter(name => name !== "");
+      console.log(nameArr)
+      const start = startOfForm(nameArr[0].split(',')[0], nameArr[0].split(',')[1]);
+      const form = start.concat(nameArr.map(name => formHtml(name.split(',')[0], name.split(',')[1]))).concat(endOfForm);
+      document.getElementById('form').innerHTML = form;
+      document.getElementById('loading').remove()
+
+    }
+
+    const startOfForm = (name, id) => `
+      <div class = "bg-warning-subtle form-control"> 
+        <span> What is the home language for ${name}</span>
+          <select class="form-select" aria-label="Default select example" id="${id}-LANG">
+            <option value="English">English</option>
+            <option value="Spanish">Spanish</option>
+            <option value="Mam">Mam</option>
+            <option value="Chuj">Chuj</option>
+            <option value="Russian">Russian</option>
+            <option value="Popti">Popti</option>
+            <option value="Mixteco">Mixteco</option>
+            <option value="Q'anjob'al">Q'anjob'al</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <br>
+      `
+
+    const formHtml = (name, id) =>
+      `    <div class="bg-primary-subtle from-control p-2 rounded">
+                <h6 class="p-2">Please check ALL conditions that apply for ${name}:</h6>
+                <div class="form-check" id="ian-div">
+                    <input class="form-check-input" type="checkbox" value="" id="${id}-elpa">
+                    <label class="form-check-label" for="ian">
+                      ELPA? <span class="fw-bold">(add to calendar event and send to Ian)</span>
+                    </label>
+                </div>
+                <br>
+                <div class="form-check" id="debbie-div">
+                    <input class="form-check-input" type="checkbox" value="" id="${id}-debbie">
+                    <label class="form-check-label" for="debbie">
+                      IN STATE EL? <span class="fw-bold">(Send to Debbie)</span>
+                    </label>
+                </div>
+                <br>
+                <div class="form-check" id="juaquina-div">
+                    <input class="form-check-input" type="checkbox" value="" id="${id}-juaquina">
+                    <label class="form-check-label" for="juaquina">
+                      IEP/Health Plan/504? <span class="fw-bold">(Send to Jauquina)</span>
+                    </label>
+                </div>
+                <br>
+                <div class="form-check" id="ian-div">
+                    <input class="form-check-input" type="checkbox" value="" id="${id}-ian">
+                    <label class="form-check-label" for="ian">
+                      OUT OF STATE EL? <span class="fw-bold">(Send to Ian)</span>
+                    </label>
+                </div>
+                <br> 
+                  <span  class="p-2"> Please write any notes for ${name}</span>
+                  <textarea class="form-control" id="${id}-notes" rows="2"></textarea>
+              </div>
+            `;
+
+    const endOfForm = `
+        <br>
+        <div class=" mb-3 form-control bg-secondary-subtle yellow">
+          <p>Select an appointment date and time</p>
+          <div class="mb-3 datepicker">
+            <label for="date">Selecte a date:</label>
+            <input type="date" id="date" name="date">
+          </div>
+          <div class="mb-3">
+            <label for="time">Select a time:</label>
+            <input type="time" id="time" name="time">
+          </div>
+          <div class="mb-3">
+            <label for="time">Select a calendar:</label>
+            <select class="form-select" aria-label="Default select example" id="calendar">
+              <option value="WC 102" class="lavender">WC 102</option>
+              <option value="DO 103- EO Registration " class="yellow">DO 103- EO Registration </option>
+              <option value="WC- Registration" class="orange">WC- Registration</option>
+           </select>
+          </div>
+          <button type="button" onClick="getAllFormData()" class="btn btn-primary">Create Appointment</button>
+        </div>`;
+
+    function getFormDataByStudent(id) {
+      console.log(id)
+      const elpa = document.getElementById(`${id}-elpa`).checked; // true or false
+      const debbie = document.getElementById(`${id}-debbie`).checked; // true or false
+      const juaquina = document.getElementById(`${id}-juaquina`).checked; // true or false
+      const ian = document.getElementById(`${id}-ian`).checked; // true or false
+      const notes = document.getElementById(`${id}-notes`).value;
+      const formData = {
+        elpa: elpa,
+        debbie: debbie,
+        juaquina: juaquina,
+        ian: ian,
+        notes: notes
+      }
+      console.log(formData)
+      return formData;
+
+    }
+
+    function getAllFormData() {
+      const names = document.getElementById('names').dataset.names;
+      console.log(names)
+      const nameArr = names.split(';').map(name => name.replace(/^,/, '')).filter(name => name !== "");
+      console.log(nameArr)
+      const formDataArr = nameArr.map(name => getFormDataByStudent(name.split(',')[1]));
+      console.log(formDataArr)
+      const lang = document.getElementById(nameArr[0].split(',')[1].concat('-LANG')).value;
+      console.log(lang);
+      const elpa = formDataArr.map(student => student["elpa"]);
+      console.log(`ELPA is ${elpa}`);
+      const debbie = formDataArr.map(student => student["debbie"]);
+      console.log(`Debbie is ${debbie}`)
+      const juaquina = formDataArr.map(student => student["juaquina"]);
+      console.log(`Juaquina is ${juaquina}`)
+      const ian = formDataArr.map(student => student["ian"]);
+      console.log(`Ian is ${ian}`);
+      const notes = formDataArr.map(student => student["notes"]);
+      console.log(`Notes are ${notes}`);
+
+      const date = document.getElementById('date').value;
+      console.log(date);
+
+      const time = document.getElementById('time').value;
+      console.log(time);
+
+      const calendar = document.getElementById('calendar').value;
+      console.log(calendar);
+
+      document.getElementById('form').innerHTML = `
+          <div style="text-align:center;">Creating calendar event and notifying people</div>
+            <div class="spinner-border text-warning" role="status" style="text-align:center;">
+              <span class="sr-only" style="text-align:center;"></span>
+            </div>
+        `
+      google.script.run.withSuccessHandler(closeDialog).createEvent(date, time, elpa, lang, notes, debbie, juaquina, ian, calendar);
+
+
+    }
+
+
+    window.closeDialog = function () {
+      google.script.host.close();
+    };
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+      getOption();
+    })
+
+  </script>
+</body>
+
+</html>

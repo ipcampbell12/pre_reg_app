@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <base target="_top">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+</head>
+
+<body>
+    <div>
+        <!-- <br>
+        <button onclick="google.script.run.createNewTab()" type="button" class="btn btn-info ms-5"
+            id="query-tabs">Create New Tab</button>
+        <br>
+        <p id="query-to-copy" data-query="/SchoolID=92;enroll_status#-1"> </p> -->
+
+        <div>
+            <br>
+            <div class="form-control ms-1 me-1">
+                <h6 class="text-center">Copy Student Numbers</h6>
+                <div class="text-center">
+                    <button onclick="getCheckedVals()" type="button" class="btn btn-primary ms-3 me-3"
+                        id="query-btn">Copy
+                        Checked Rows</button>
+                    <br>
+                    <div id="checked-spinner-placeholder"></div>
+                    <div id="checked-alert-placeholder"></div>
+                </div>
+                <br>
+                <div class="text-center">
+                    <button onclick="getUnCheckedVals()" type="button" class="btn btn-secondary ms-3 me-3"
+                        id="query-btn">Copy
+                        UnChecked Rows</button>
+                    <br>
+                    <div id="unchecked-spinner-placeholder"></div>
+                    <div id="unchecked-alert-placeholder"></div>
+                </div>
+                <br>
+            </div>
+            <br>
+            <div class="form-control ms-1 me-1">
+                <h6 class="text-center">Hide/Unhide Rows</h6>
+                <div class="text-center">
+                    <button onclick="hideCheckedRows()" type="button" class="btn btn-warning ms-3 me-3 " id="query-btn">
+                        Hide Checked Rows</button>
+                    <br>
+                    <div id="hidden-spinner-placeholder"></div>
+                    <div id="hidden-alert-placeholder"></div>
+                </div>
+                <br>
+                <div class="text-center">
+                    <button onclick="unHideCheckedRows()" type="button" class="btn btn-success ms-3 me-3 "
+                        id="query-btn">
+                        Unhide Checked Rows</button>
+                    <br>
+                    <div id="unhidden-spinner-placeholder"></div>
+                    <div id="unhidden-alert-placeholder"></div>
+                </div>
+                <br>
+
+            </div>
+        </div>
+        <div id="fields-to-copy" data-fields="    
+            First_Name
+            Last_Name
+            Student_Number
+            ^([schools]name)
+            StudentCoreFields.esl_placement
+            S_OR_STU_LEP_X.RdDmnCd
+            S_OR_STU_LEP_X.WritingDmnCd
+            S_OR_STU_LEP_X.LstnngDmnCd
+            S_OR_STU_LEP_X.SpeakingDmnCd
+            Home_Phone">
+        </div>
+        <br>
+        <div class="text-center ms-1 me-1 form-control">
+            <h6 class="text-center mt-2">Copy Fields for PowerSchool Export</h6>
+            <br>
+            <div class="text-center">
+                <button onclick="copyFields()" type="button" class="btn btn-warning ms-3 me-3" id="fields-btn"
+                    style="text-align:center;">ELPA Screener Fields</button>
+                <br>
+                <div id="fields-spinner-placeholder"></div>
+                <div id="liveAlertPlaceholder-fields"></div>
+                <br>
+            </div>
+        </div>
+        <br>
+        <!-- <button onclick="google.script.run.hideExtraSheets()" type="button" class="btn btn-warning ms-5" id="fields-btn"
+            style="text-align:center;">Hide Extra Sheets</button> -->
+
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+</body>
+<script>
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+
+    function activateSheet() {
+        const sheet = document.getElementById('sheet-select').value;
+        google.script.run.ssActivateSheet(sheet)
+    }
+
+    function copyFields() {
+        const el = document.createElement('textarea');
+        const str = document.getElementById('fields-to-copy').dataset.fields;
+        el.value = str;
+        console.log(el.value)
+        navigator.clipboard.writeText(el.value)
+        addAlert("liveAlertPlaceholder-fields", "success", "Export fields copied to clipboard")
+    }
+
+    function copyToClipboard(values) {
+        const el = document.createElement('textarea');
+        el.value = values;
+        console.log("copying to clipboard")
+        console.log(el.value)
+
+        navigator.clipboard.writeText(el.value)
+        addAlert("copied-alert-placeholder", "success", "Student numbers copied to clipboard")
+    }
+
+    function getCheckedVals() {
+        addSpinner("checked-spinner-placeholder")
+        google.script.run.withSuccessHandler(copyToClipboard).getStudentNums("checked")
+    }
+
+    function getUnCheckedVals() {
+        addSpinner("unchecked-spinner-placeholder")
+        google.script.run.withSuccessHandler(copyToClipboard).getStudentNums("unchecked")
+    }
+
+    function hideCheckedRows() {
+        addSpinner("hidden-spinner-placeholder")
+        google.script.run.withSuccessHandler(hiddenAlert).hideRows("hide")
+    }
+
+    function unHideCheckedRows() {
+        addSpinner("unhidden-spinner-placeholder")
+        google.script.run.withSuccessHandler(unHiddenAlert).hideRows("unhide")
+    }
+
+    function hiddenAlert() {
+        addAlert("hidden-alert-placeholder", "success", "Checked rows hidden!")
+    }
+
+    function unHiddenAlert() {
+        addAlert("unhidden-alert-placeholder", "success", "Checked rows revealed!")
+    }
+
+
+
+    function addAlert(id, type, statement) {
+        removeSpinner()
+        const placeholder = document.getElementById(id)
+        const wrapper = document.createElement('div')
+        wrapper.innerHTML = [
+            `
+      <div class="alert alert-${type} alert-dismissible" role="alert" id="alert">`,
+            `   <div>${statement}</div>`,
+            '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
+            '</div>'
+        ].join('')
+        placeholder.append(wrapper)
+        setTimeout(() => {
+            document.getElementById("alert").remove();
+        }, 3000)
+    }
+
+    function addSpinner(id = "family") {
+        console.log("The spinner function has run")
+        document.getElementById(id).innerHTML =
+            ` <div id = "loading" class= "loading pt-40">
+    <div class="d-flex justify-content-center">
+      <div>
+
+         <div class="spinner-border" role="status" style="width: 4rem; height: 4rem;">
+          <span class="visually-hidden">Loading...</span>
+         </div>
+         <div>Loading... </div>
+      </div>
+    </div>
+                    </div>
+      `;
+
+    }
+
+    function removeSpinner() {
+        document.getElementById('loading').remove()
+    }
+
+
+</script>
+</body>
+
+</html>

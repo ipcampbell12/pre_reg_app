@@ -15,31 +15,38 @@ function openRegForm(e) {
   const ui = sheetsApp.getUi();
 
   const studentName = getVal(row, COLS.name, 1, 1, active)
-  Logger.log(`Student name is ${studentName}`)
+  //Logger.log(`Student name is ${studentName}`)
   const parentName = getVal(row, COLS.parent, 1, 1, active)
-  Logger.log(`Parent name is ${parentName}`)
+  //Logger.log(`Parent name is ${parentName}`)
   const studentNum = getVal(row, COLS.perm, 1, 1, active)
-  Logger.log(`Student number is ${studentNum}`)
+  //Logger.log(`Student number is ${studentNum}`)
   const dobNote = active.getRange(row, COLS["DOB"]).getNote()
   const appointmentSchedBox = active.getRange(row, COLS["check"]);
   const appointmentSched = appointmentSchedBox.getValue();
+  
 
-  if ((col === COLS["check"] && appointmentSched === true) && sheetName === 'All Responses' && studentNum !== "" && dobNote !== "This student is too young for kindergarten") {
+
+  if ((col === COLS["check"] && appointmentSched === true) && sheetName === 'All Responses' && dobNote !== "This student is too young for kindergarten") {
+    const permResponse = ui.alert("Perm Number Needed","Would you like to create perm number(s) for these students?",ui.ButtonSet.YES_NO);
+    if(permResponse === ui.Button.YES){
+      setPermNumber(parentName);
+      const apt = ui.alert("Perm numbers created. Would you like to make appointments for these students?",ui.ButtonSet.YES_NO);
+      if(apt === ui.Button.NO){
+        return;
+      }
+    }
     const students = getAllData(parentName, "arrs", sheetName);
-    Logger.log(students)
+   // Logger.log(students)
     const clientStudents = students.map(student => [student[COLS.name - 1].concat(',').concat(student[COLS.perm - 1]).concat(',').concat(row).concat(',').concat(sheetName).concat(';')]);
-    Logger.log(clientStudents)
+   // Logger.log(clientStudents)
     saveStudentData(students)
     showRegForm(clientStudents)
-  }
-  else if ((col === COLS["check"] && appointmentSched === true) && sheetName === 'All Responses' && studentNum === "") {
-    ui.alert(`You need to add a Student Number for ${studentName} in Column Y before you can schedule an appointment.`)
-    appointmentSchedBox.setValue(false)
   }
   else if ((col === COLS["check"] && appointmentSched === true) && sheetName === 'All Responses' && dobNote === "This student is too young for kindergarten") {
     ui.alert(` ${studentName} is too young for kindergarten.`)
     appointmentSchedBox.setValue(false)
   }
+
 
 }
 
@@ -55,6 +62,8 @@ const COLS = {
   "perm": 25,
   "grade": 8,
   "oldSchool": 14,
+  "scheduled":28,
+  "aptDT":29
 }
 
 function getVal(row, col, numRows, numCols, sheet) {
@@ -100,29 +109,14 @@ function showRegForm(students) {
 
 }
 
-
-
-
-
-function getRegId() {
-  const sheetNames = ['ENGLISH Responses', "SPANISH Responses", "RUSSIAN Responses"];
-  const sheets = sheetNames.map(sheetName => getSheet(sheetName));
-  let id = 0;
-  sheets.forEach(sheet => {
-    const length = sheet.getLastRow() - 1;
-    id += length;
-  });
-
-  Logger.log(id);
-  return id;
-}
-
-
 function getAllData(parent, type, name, elpa = "", lang = "", notes = "") {
 
-  const rows = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(name).getRange("A2:Z").getValues().filter(row => row[COLS.parent - 1] === parent);
+  const dataRows = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(name).getRange("A2:AB").getValues();
+  
+  const rows = dataRows.filter(row => row[COLS.parent - 1] === parent);
+  const permRows = dataRows.map(row => [...row,dataRows.indexOf(row)+2]).filter(row => row[COLS.parent - 1] === parent);
 
-
+  
   if (type === "text") {
     const descriptions = `${rows.map((row, idx) => getDescription(row, name, elpa[idx], lang, notes[idx]))}`
     // Logger.log(descriptions)
@@ -138,16 +132,22 @@ function getAllData(parent, type, name, elpa = "", lang = "", notes = "") {
     return siblings;
   }
 
+  if(type === "perm"){
+    return permRows;
+  }
+
+
 }
 
 
 function getDescription(dataRow, lang, notes, siblings) {
   //Logger.log(`Description Language is ${lang}`)
+  Logger.log(`Date row is ${dataRow[COLS.DOB-1]}`)
   const description = ` \n 
     ${dataRow[COLS.name - 1].concat(`(${extractGradeNumber(dataRow[7])}) `)}
       \u2022  Home Language: ${lang} 
       \u2022  ${dataRow[9]}:${dataRow[8]}, ${dataRow[10]} 
-      \u2022  DOB:${Utilities.formatDate(new Date(dataRow[5]), "GMT", "MM/dd/yyy")}
+      \u2022  DOB:${Utilities.formatDate(new Date(dataRow[COLS.DOB-1]), "GMT", "MM/dd/yyy")}
       \u2022  Grade:${dataRow[7]} 
       \u2022  Phone: ${dataRow[10]}
       \u2022  Last School: ${dataRow[13]} 
@@ -194,13 +194,18 @@ function sendEmail(email, staff, info) {
       to: email,
       subject: `${staff}, a registration requires your attention`,
       body: otherMessage.concat('\n').concat(info),
-      cc: "inpcampbell@woodburnsd.org"
+      cc: "malvarado@woodburnsd.org"
     });
   }
 
   if (staff === "Debbie") {
     const otherMessage = "An incoming student is an IN state ELL";
-    app.sendEmail(email, `${staff}, a registration requires your attention`, otherMessage.concat('\n').concat(info))
+    app.sendEmail({
+      to: email, 
+      subject: `${staff}, a registration requires your attention`, 
+      body: otherMessage.concat('\n').concat(info),
+      cc:["malvarado@woodburnsd.org","megan.wall@woodburnsd.org"]
+      })
   }
 
   if (staff === "Ian") {
@@ -250,9 +255,9 @@ function createEvent(date, time, elpa, lang, notes, debbie, juaquina, ian, calen
   const parent = data[0][COLS.parent - 1];
 
   const siblings = getSiblings(parent, data);
-  Logger.log(siblings)
+  //Logger.log(siblings)
   const title = siblings.map((sibling, index) => sibling.concat(` ${elpa[index] ? 'ELPA' : ''}`));
-  Logger.log(title)
+ // Logger.log(title)
   const hours = siblings.length;
 
   const aptTime = new Date(`${date} ${time}`);
@@ -268,7 +273,7 @@ function createEvent(date, time, elpa, lang, notes, debbie, juaquina, ian, calen
   const opts = { elpa: elpa, debbie: debbie, juaquina: juaquina, ian: ian };
   const ui = SpreadsheetApp.getUi()
 
-  console.log(opts)
+  //console.log(opts)
   const response = ui.alert(`
 
     ${showSummary(siblings, opts)}
@@ -282,7 +287,7 @@ function createEvent(date, time, elpa, lang, notes, debbie, juaquina, ian, calen
   if (response === ui.Button.YES) {
     regCal.createEvent(title, aptTime, endTime, info);
     sendToTabs(opts, abrData)
-    data.forEach(row => moveRow(row, "Scheduled Appointments", 26))
+    data.forEach(row => moveRow(row, "Scheduled Appointments", COLS["scheduled"]))
     removeRows("All Responses", parent)
     sendAlerts(data, lang, notes, siblings, opts["elpa"], opts["debbie"], opts["juaquina"], opts["ian"]);
     SpreadsheetApp.getUi().alert("Appointment created and notifications sent");
@@ -291,8 +296,8 @@ function createEvent(date, time, elpa, lang, notes, debbie, juaquina, ian, calen
 }
 
 function showSummary(siblings, obj) {
-  Logger.log(`Siblings are: ${siblings}`);
-  Logger.log(`Opts are: ${obj}`);
+  //Logger.log(`Siblings are: ${siblings}`);
+ // Logger.log(`Opts are: ${obj}`);
 
   const summary = siblings.map((sibling, i) => {
     const notifications = [];
@@ -313,7 +318,7 @@ function showSummary(siblings, obj) {
     return `For ${sibling}, notifications will be sent to: \n ${notifications.length !== 0 ? notifications.join(', ') : "nobody"} `;
   });
 
-  Logger.log(summary)
+  //Logger.log(summary)
   return summary;
 
 }
@@ -323,9 +328,9 @@ function ssFormatDate(date) {
 }
 
 function removeRows(sheet, parent) {
-  const datSheet = SpreadsheetApp.getActive().getSheetByName(sheet);
-  const rowNums = datSheet.createTextFinder(parent).matchEntireCell(true).findAll().map(row => row.getRow()).reverse();
-  Logger.log(rowNums)
+  const datSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheet);
+  const rowNums = Array.from(new Set(datSheet.createTextFinder(parent).matchEntireCell(true).findAll().map(row => row.getRow()))).reverse()
+ // Logger.log(rowNums)
   rowNums.forEach(row => {
     try {
       datSheet.deleteRow(row)
@@ -335,6 +340,8 @@ function removeRows(sheet, parent) {
 
   })
 }
+
+
 
 
 function sendToTabs(opts, data) {
@@ -371,20 +378,13 @@ function moveRow(row, person, numCols) {
   }
 
   if (person === 'Scheduled Appointments') {
-    sheet.getRange(range.getRow(), 27).insertCheckboxes()
+    sheet.getRange(range.getRow(), COLS.scheduled).insertCheckboxes()
   }
 
 
 }
 
 
-
-
-
-
-function checkIt() {
-  checkDate('09/01/2023', '11/12/2019')
-}
 
 function checkDate(startOfSchoolYear, studentBirthDate) {
   const startYearDate = new Date(startOfSchoolYear);
@@ -408,7 +408,7 @@ function checkDate(startOfSchoolYear, studentBirthDate) {
 }
 
 
-function createOnEditTrigger() {
+function createOnEditRegTrigger() {
   ScriptApp.newTrigger('openRegForm')
     .forSpreadsheet(SpreadsheetApp.getActive())
     .onEdit()
@@ -425,18 +425,13 @@ function createSubmitTriggerMoveAndTrim() {
 
 
 const emails = {
-  maria: "inpcampbell@woodburnsd.org",
-  ccindy: "inpcampbell@woodburnsd.org",
-  juaquina: "inpcampbell@woodburnsd.org",
-  debbie: "inpcampbell@woodburnsd.org",
+  maria: "malvarado@woodburnsd.org",
+  ccindy: "cavgi@woodburnsd.org",
+  juaquina: "jscott@woodburnsd.org",
+  debbie: "dwolfer@woodburnsd.org",
   ian: "inpcampbell@woodburnsd.org"
 }
 
-
-
-function testIt() {
-  hideRows("hide")
-}
 
 function addTest() {
   const range = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('ENGLISH Responses').getRange(2, 3, 646, 1)
@@ -448,11 +443,11 @@ function addTest() {
 
 }
 
-function check() {
-  const date = new Date('9/20/23')
-  const cal = CalendarApp.getCalendarsByName('WC- Registration')
-  const events = cal[0].getEventsForDay(date)
-  const stuff = events.map(event => event.getCreators())
-  Logger.log(stuff)
+
+function getTestVals(){
+  const sheet = getSheet("All Responses")
+  const vals = getVals(3,4,6,COLS.scheduled,sheet)
+  Logger.log(vals)
 }
+
 

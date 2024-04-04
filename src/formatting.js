@@ -1,4 +1,4 @@
-function createOnEditTrigger() {
+function createOnEditFormatTrigger() {
     ScriptApp.newTrigger('formatRow')
         .forSpreadsheet(SpreadsheetApp.getActive())
         .onEdit()

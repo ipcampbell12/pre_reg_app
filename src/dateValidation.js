@@ -77,7 +77,7 @@ function getDobGrade(year, dob) {
 
     } else if (year === "2024-2025") {
         try {
-            const chart = getVals(4, 4, 13, 3, gradeCheckSheet);
+            const chart = getVals(3, 4, 13, 3, gradeCheckSheet);
             const row = chart.filter(row => checkRow(row, dob) === true);
             //   Logger.log('2024-2025 school year selected')
             const grade = row[0][2]

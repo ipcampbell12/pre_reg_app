@@ -24,17 +24,24 @@ function openRegForm(e) {
   const appointmentSchedBox = active.getRange(row, COLS["check"]);
   const appointmentSched = appointmentSchedBox.getValue();
   
+  //This code blocks appointment creation if the student has not been given a perm number
+  // const regex = /\b\d{8}\b/;
 
+  // if(sheetName === 'All Responses' && (col === COLS["check"] && appointmentSched === true) && regex.test(studentNum)===false){
+  //   ui.alert("You need to add a valid perm number before scheduling this student",ui.ButtonSet.OK);
+  //   appointmentSchedBox.uncheck();
+  //   return;
+  // }
 
   if ((col === COLS["check"] && appointmentSched === true) && sheetName === 'All Responses' && dobNote !== "This student is too young for kindergarten") {
-    const permResponse = ui.alert("Perm Number Needed","Would you like to create perm number(s) for these students?",ui.ButtonSet.YES_NO);
-    if(permResponse === ui.Button.YES){
-      setPermNumber(parentName);
-      const apt = ui.alert("Perm numbers created. Would you like to make appointments for these students?",ui.ButtonSet.YES_NO);
-      if(apt === ui.Button.NO){
-        return;
-      }
-    }
+    // const permResponse = ui.alert("Perm Number Needed","Would you like to create perm number(s) for these students?",ui.ButtonSet.YES_NO);
+    // if(permResponse === ui.Button.YES){
+    //   setPermNumber(parentName);
+    //   const apt = ui.alert("Perm numbers created. Would you like to make appointments for these students?",ui.ButtonSet.YES_NO);
+    //   if(apt === ui.Button.NO){
+    //     return;
+    //   }
+    // }
     const students = getAllData(parentName, "arrs", sheetName);
    // Logger.log(students)
     const clientStudents = students.map(student => [student[COLS.name - 1].concat(',').concat(student[COLS.perm - 1]).concat(',').concat(row).concat(',').concat(sheetName).concat(';')]);
@@ -63,6 +70,8 @@ const COLS = {
   "grade": 8,
   "oldSchool": 14,
   "scheduled":28,
+  "boudarySchool":26,
+  "completed":27,
   "aptDT":29
 }
 
@@ -378,7 +387,7 @@ function moveRow(row, person, numCols) {
   }
 
   if (person === 'Scheduled Appointments') {
-    sheet.getRange(range.getRow(), COLS.scheduled).insertCheckboxes()
+    sheet.getRange(range.getRow(), COLS.completed).insertCheckboxes()
   }
 
 

@@ -3,8 +3,9 @@ function openRegForm(e) {
 
   const active = e.source.getActiveSheet()
   const sheetName = active.getSheetName();
+   const allowedSheets = ['SPANISH Responses','ENGLISH Responses','RUSSIAN Responses','All Responses'];
 
-  if (sheetName !== "All Responses") {
+  if (!allowedSheets.includes(sheetName)) {
     return;
   }
 
@@ -23,7 +24,7 @@ function openRegForm(e) {
   const dobNote = active.getRange(row, COLS["DOB"]).getNote()
   const appointmentSchedBox = active.getRange(row, COLS["check"]);
   const appointmentSched = appointmentSchedBox.getValue();
-  
+ 
   //This code blocks appointment creation if the student has not been given a perm number
   // const regex = /\b\d{8}\b/;
 
@@ -32,6 +33,15 @@ function openRegForm(e) {
   //   appointmentSchedBox.uncheck();
   //   return;
   // }
+
+  if((col === COLS["check"] && appointmentSched === true) && allowedSheets.includes(sheetName)){
+      const students = getAllData(parentName, "arrs", sheetName);
+   // Logger.log(students)
+      const clientStudents = students.map(student => [student[COLS.name - 1].concat(',').concat(student[COLS.perm - 1]).concat(',').concat(row).concat(',').concat(sheetName).concat(';')]);
+   // Logger.log(clientStudents)
+      saveStudentData(students)
+      showRegForm(clientStudents)
+  }
 
   if ((col === COLS["check"] && appointmentSched === true) && sheetName === 'All Responses' && dobNote !== "This student is too young for kindergarten") {
     // const permResponse = ui.alert("Perm Number Needed","Would you like to create perm number(s) for these students?",ui.ButtonSet.YES_NO);
@@ -203,7 +213,7 @@ function sendEmail(email, staff, info) {
       to: email,
       subject: `${staff}, a registration requires your attention`,
       body: otherMessage.concat('\n').concat(info),
-      cc: "malvarado@woodburnsd.org"
+      cc: ["malvarado@woodburnsd.org","megan.wall@woodburnsd.org"].join(", ")
     });
   }
 
@@ -213,7 +223,7 @@ function sendEmail(email, staff, info) {
       to: email, 
       subject: `${staff}, a registration requires your attention`, 
       body: otherMessage.concat('\n').concat(info),
-      cc:["malvarado@woodburnsd.org","megan.wall@woodburnsd.org"]
+      cc:["malvarado@woodburnsd.org","inpcampbell@woodburnsd.org"].join(", ")
       })
   }
 
@@ -251,6 +261,10 @@ function sendAlerts(data, lang, notes, siblings, elpa, debbie, juaquina, ian) {
   })
 }
 
+
+function getCurrent(){
+  return SpreadsheetApp.getActive().getActiveSheet()
+}
 
 
 function createEvent(date, time, elpa, lang, notes, debbie, juaquina, ian, calendar) {
@@ -297,7 +311,7 @@ function createEvent(date, time, elpa, lang, notes, debbie, juaquina, ian, calen
     regCal.createEvent(title, aptTime, endTime, info);
     sendToTabs(opts, abrData)
     data.forEach(row => moveRow(row, "Scheduled Appointments", COLS["scheduled"]))
-    removeRows("All Responses", parent)
+    removeRows(parent)
     sendAlerts(data, lang, notes, siblings, opts["elpa"], opts["debbie"], opts["juaquina"], opts["ian"]);
     SpreadsheetApp.getUi().alert("Appointment created and notifications sent");
   };
@@ -336,8 +350,8 @@ function ssFormatDate(date) {
   return Utilities.formatDate(new Date(date), 'PST', 'MM/dd/yyyy')
 }
 
-function removeRows(sheet, parent) {
-  const datSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheet);
+function removeRows(parent) {
+  const datSheet = getCurrent()
   const rowNums = Array.from(new Set(datSheet.createTextFinder(parent).matchEntireCell(true).findAll().map(row => row.getRow()))).reverse()
  // Logger.log(rowNums)
   rowNums.forEach(row => {
@@ -437,7 +451,7 @@ const emails = {
   maria: "malvarado@woodburnsd.org",
   ccindy: "cavgi@woodburnsd.org",
   juaquina: "jscott@woodburnsd.org",
-  debbie: "dwolfer@woodburnsd.org",
+  debbie: "dballweber@woodburnsd.org",
   ian: "inpcampbell@woodburnsd.org"
 }
 

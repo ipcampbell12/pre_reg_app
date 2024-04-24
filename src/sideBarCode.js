@@ -4,6 +4,7 @@ function initMenu() {
         .addItem('Open Sidebar', 'openSideBar')
         .addItem("Authorize Script", "authorizeScript()")
         .addItem("Hide Checked rows", "hideRows")
+        .addItem("Check Rows","checkExists")
         .addToUi()
 }
 
